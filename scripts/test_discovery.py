@@ -1,5 +1,6 @@
 """Test script for filing discovery functionality."""
 
+import logging
 import sys
 from datetime import date
 from pathlib import Path
@@ -8,6 +9,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dealminer.downloader import discover_filings_for_date
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 if __name__ == "__main__":
     # Test with a recent date

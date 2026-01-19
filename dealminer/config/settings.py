@@ -18,14 +18,16 @@ USER_AGENT = os.getenv("SEC_USER_AGENT", "DealMiner - M&A Data Extraction Tool c
 # Supported SEC Form Types for M&A
 SUPPORTED_FORM_TYPES: List[str] = [
     "8-K",
-    "S-4",
-    "425",
     "PREM14A",
     "SCTOT",
     "SC14D9",
+    "S-4",
     "13D",
-    "4",
+    "425",
 ]
+
+# SEC Daily Index URL template
+SEC_DAILY_INDEX_BASE_URL = f"{SEC_EDGAR_BASE_URL}/Archives/edgar/daily-index"
 
 # Data directories
 BASE_DIR = Path(__file__).parent.parent.parent

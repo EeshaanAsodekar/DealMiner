@@ -30,12 +30,22 @@ SUPPORTED_FORM_TYPES: List[str] = [
 SEC_DAILY_INDEX_BASE_URL = f"{SEC_EDGAR_BASE_URL}/Archives/edgar/daily-index"
 
 # Data directories
+# When running in Airflow Docker, use /opt/airflow/data (mounted rw) instead of dealminer/data (ro)
 BASE_DIR = Path(__file__).parent.parent.parent
-DATA_DIR = BASE_DIR / "dealminer" / "data"
+_DATA_DIR_ENV = os.getenv("DEALMINER_DATA_DIR")
+if _DATA_DIR_ENV:
+    DATA_DIR = Path(_DATA_DIR_ENV)
+else:
+    DATA_DIR = BASE_DIR / "dealminer" / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
 
 # MongoDB Configuration
-MONGODB_CONNECTION_STRING = os.getenv("MONGODB_CONNECTION_STRING", "mongodb://localhost:27017/")
-MONGODB_DATABASE_NAME = os.getenv("MONGODB_DATABASE_NAME", "dealminer")
-MONGODB_COLLECTION_NAME = os.getenv("MONGODB_COLLECTION_NAME", "ma_deals")
+MONGODB_CONNECTION_STRING = os.getenv(
+    "MONGODB_CONNECTION_STRING",
+    "mongodb+srv://easodekar_db_user:cKbGKk8U3Q7LGoVT@manda.svuxf3p.mongodb.net/",
+)
+MONGODB_DATABASE_NAME = os.getenv(
+    "MONGODB_DATABASE_NAME"
+) or os.getenv("MONGODB_DATABASE", "dealminer")
+MONGODB_COLLECTION_NAME = os.getenv("MONGODB_COLLECTION_NAME", "rawfilings")

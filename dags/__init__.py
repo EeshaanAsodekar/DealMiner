@@ -1,1 +1,1 @@
-"""Apache Airflow DAGs for DealMiner pipeline."""
+"""Airflow DAGs for DealMiner SEC filing pipeline."""

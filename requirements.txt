@@ -6,8 +6,8 @@ pymongo>=4.6.0
 pydantic>=2.5.0
 python-dotenv>=1.0.0
 
-# Apache Airflow (if installing locally)
-# apache-airflow>=2.8.0
+# Apache Airflow
+apache-airflow>=2.8.0
 
 # PDF parsing (if needed for some filings)
 # pdfminer.six>=20221105

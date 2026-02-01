@@ -1,14 +1,19 @@
 """Airflow DAG for SEC filing discovery, download, and storage pipeline."""
 
 import sys
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
+import requests
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.sensors.python import PythonSensor
 
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from dealminer.config.settings import MONGODB_COLLECTION_NAME, USER_AGENT
+from dealminer.downloader.filing_discovery import construct_daily_index_url
 
 from dags.tasks.sec_filing_tasks import (
     discover_filings_task,
@@ -17,8 +22,6 @@ from dags.tasks.sec_filing_tasks import (
     parse_filter_8k_task,
     store_filings_task,
 )
-
-from dealminer.config.settings import MONGODB_COLLECTION_NAME
 
 # Default arguments for DAG
 default_args = {
@@ -63,6 +66,41 @@ def get_target_date(**context):
         return logical_date.strftime("%Y-%m-%d")
     return (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
 
+
+def _parse_target_date(target_date_str: str) -> date:
+    """Parse YYYY-MM-DD string to date for URL construction."""
+    return datetime.strptime(target_date_str, "%Y-%m-%d").date()
+
+
+def check_sec_index_available(**context) -> bool:
+    """Sensor callable: return True when SEC daily index for target date exists.
+
+    Performs HEAD request to avoid downloading the full index file.
+    """
+    target_date_str = get_target_date(**context)
+    filing_date = _parse_target_date(target_date_str)
+    url = construct_daily_index_url(filing_date)
+    try:
+        response = requests.head(
+            url,
+            headers={"User-Agent": USER_AGENT},
+            timeout=30,
+            allow_redirects=True,
+        )
+        return response.status_code == 200
+    except requests.RequestException:
+        return False
+
+
+# Task 0: Wait for SEC daily index to be available
+wait_for_sec_index = PythonSensor(
+    task_id="wait_for_sec_index",
+    python_callable=check_sec_index_available,
+    poke_interval=300,  # Check every 5 minutes
+    timeout=3600,  # Give up after 1 hour
+    mode="reschedule",  # Free worker slot between pokes
+    dag=dag,
+)
 
 # Task 1: Discover filings
 discover_task = PythonOperator(
@@ -153,6 +191,7 @@ store_task = PythonOperator(
 )
 
 # Define task dependencies
+wait_for_sec_index >> discover_task
 discover_task >> [download_target_forms_task_op, download_8k_task_op]
 download_8k_task_op >> parse_filter_8k_task_op
 [download_target_forms_task_op, parse_filter_8k_task_op] >> store_task

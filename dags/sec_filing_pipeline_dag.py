@@ -36,14 +36,17 @@ dag = DAG(
     "sec_filing_pipeline",
     default_args=default_args,
     description="Discover, download, and store SEC filings for M&A analysis",
-    schedule=None,  # Manual trigger only
+    schedule="55 4 * * *",  # 4:55 UTC = 11:55 PM EST daily
     catchup=False,
     tags=["sec", "filings", "ma"],
 )
 
 
 def get_target_date(**context):
-    """Extract target date from DAG run configuration or use default.
+    """Extract target date from DAG run configuration or logical date.
+
+    For scheduled runs (11:55 PM daily): uses logical_date (data interval).
+    For manual trigger with config: uses target_date from conf.
 
     Args:
         **context: Airflow context dictionary.
@@ -53,12 +56,12 @@ def get_target_date(**context):
     """
     dag_run = context.get("dag_run")
     if dag_run and dag_run.conf and "target_date" in dag_run.conf:
-        target_date = dag_run.conf["target_date"]
-    else:
-        # Default to yesterday if no date provided
-        target_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-
-    return target_date
+        return dag_run.conf["target_date"]
+    # Scheduled run: use logical_date (Airflow 2.2+)
+    logical_date = context.get("logical_date") or context.get("execution_date")
+    if logical_date:
+        return logical_date.strftime("%Y-%m-%d")
+    return (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
 
 
 # Task 1: Discover filings

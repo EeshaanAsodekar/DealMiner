@@ -12,8 +12,8 @@ SEC_EDGAR_API_URL = f"{SEC_EDGAR_BASE_URL}/cgi-bin"
 # Rate limiting (SEC requires delays between requests)
 REQUEST_DELAY_SECONDS = float(os.getenv("SEC_REQUEST_DELAY", "0.1"))
 
-# User agent (SEC requires identifying user agent)
-USER_AGENT = os.getenv("SEC_USER_AGENT", "DealMiner - M&A Data Extraction Tool contact@example.com")
+# User agent (SEC requires identifying user agent – set SEC_USER_AGENT in .env)
+USER_AGENT = os.getenv("SEC_USER_AGENT", "DealMiner/0.1 (set SEC_USER_AGENT in .env)")
 
 # Supported SEC Form Types for M&A
 SUPPORTED_FORM_TYPES: List[str] = [
@@ -40,12 +40,9 @@ else:
 RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
 
-# MongoDB Configuration
-MONGODB_CONNECTION_STRING = os.getenv(
-    "MONGODB_CONNECTION_STRING",
-    "mongodb+srv://easodekar_db_user:cKbGKk8U3Q7LGoVT@manda.svuxf3p.mongodb.net/",
+# MongoDB Configuration (all from .env / environment – no defaults for secrets)
+MONGODB_CONNECTION_STRING = os.getenv("MONGODB_CONNECTION_STRING")
+MONGODB_DATABASE_NAME = (
+    os.getenv("MONGODB_DATABASE_NAME") or os.getenv("MONGODB_DATABASE", "dealminer")
 )
-MONGODB_DATABASE_NAME = os.getenv(
-    "MONGODB_DATABASE_NAME"
-) or os.getenv("MONGODB_DATABASE", "dealminer")
 MONGODB_COLLECTION_NAME = os.getenv("MONGODB_COLLECTION_NAME", "rawfilings")
